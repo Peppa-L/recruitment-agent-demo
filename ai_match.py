@@ -21,16 +21,10 @@ from typing import Optional, Dict, Any, List
 # ============================================================
 # 配置（优先读 config.py，回退到环境变量）
 # ============================================================
-try:
-    from config import get_api_config
-    _cfg = get_api_config()
-    AI_API_KEY = _cfg.get("api_key", "")
-    AI_API_BASE = _cfg.get("api_base", "")
-    AI_MODEL = _cfg.get("model", "gpt-4o-mini")
-except Exception:
-    AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-    AI_API_BASE = os.environ.get("OPENAI_API_BASE", "")
-    AI_MODEL = os.environ.get("AI_MATCH_MODEL", "gpt-4o-mini")
+# API Key 由 app.py 调用时传入，此处仅做环境变量 fallback
+AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+AI_API_BASE = os.environ.get("OPENAI_API_BASE", "")
+AI_MODEL = os.environ.get("AI_MATCH_MODEL", "gpt-4o-mini")
 
 
 # ============================================================
@@ -370,13 +364,6 @@ def ai_match_resume(
         }
     """
     key = api_key or AI_API_KEY
-    if not key:
-        # 最终 fallback：直接从 config.py 读取
-        try:
-            from config import get_api_config as _gac
-            key = _gac().get("api_key", "")
-        except Exception:
-            pass
     if not key:
         raise ValueError(
             "AI 匹配需要 LLM API Key。请设置环境变量 OPENAI_API_KEY，"

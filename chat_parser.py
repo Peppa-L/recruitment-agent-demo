@@ -26,18 +26,11 @@ from datetime import datetime
 
 
 # ============================================================
-# 配置
+# 配置（API Key 由 app.py 调用时传入，此处仅做 fallback）
 # ============================================================
-try:
-    from config import get_api_config
-    _cfg = get_api_config()
-    AI_API_KEY = _cfg.get("api_key", "")
-    AI_API_BASE = _cfg.get("api_base", "")
-    AI_MODEL = _cfg.get("model", "gpt-4o-mini")
-except Exception:
-    AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-    AI_API_BASE = os.environ.get("OPENAI_API_BASE", "")
-    AI_MODEL = os.environ.get("AI_PARSE_MODEL", "gpt-4o-mini")
+AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+AI_API_BASE = os.environ.get("OPENAI_API_BASE", "")
+AI_MODEL = os.environ.get("AI_PARSE_MODEL", "gpt-4o-mini")
 
 
 # ============================================================
@@ -276,12 +269,6 @@ def parse_chat_messages(
         dict: 结构化解析结果，格式见 Prompt 模板
     """
     key = api_key or AI_API_KEY
-    if not key:
-        try:
-            from config import get_api_config as _gac
-            key = _gac().get("api_key", "")
-        except Exception:
-            pass
     if not key:
         raise ValueError(
             "AI 解析需要 LLM API Key。请设置环境变量 OPENAI_API_KEY，"

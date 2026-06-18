@@ -24,7 +24,7 @@ from typing import Optional, Dict, Any, List
 # API Key 由 app.py 调用时传入，此处仅做环境变量 fallback
 AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 AI_API_BASE = os.environ.get("OPENAI_API_BASE", "")
-AI_MODEL = os.environ.get("AI_MATCH_MODEL", "gpt-4o-mini")
+AI_MODEL = os.environ.get("AI_MATCH_MODEL", "deepseek-chat")
 
 
 # ============================================================

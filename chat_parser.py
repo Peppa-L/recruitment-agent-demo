@@ -30,7 +30,7 @@ from datetime import datetime
 # ============================================================
 AI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 AI_API_BASE = os.environ.get("OPENAI_API_BASE", "")
-AI_MODEL = os.environ.get("AI_PARSE_MODEL", "gpt-4o-mini")
+AI_MODEL = os.environ.get("AI_PARSE_MODEL", "deepseek-chat")
 
 
 # ============================================================

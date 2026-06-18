@@ -1,49 +1,131 @@
-# Recruitment Agent
+# 🤖 招聘提效 AI Agent Demo
 
-AI 驱动的招聘管理系统，基于 Streamlit 构建。
+将微信/企业微信群聊中的非结构化招聘对话，通过 AI Agent 自动解析为结构化招聘数据，实现招聘流程自动化。
 
-## 功能
+## 痛点场景
 
-- 候选人管理（添加/查看/编辑/删除）
-- 简历上传与 AI 解析
-- 职位管理
-- AI 智能匹配（多维度评分）
-- 面试安排与跟进
-- 招聘漏斗统计
-- Excel 导出
+HR 日常在微信/企业微信群中与用人部门沟通候选人，需要手动将聊天记录中的信息录入到招聘系统/在线文档中：
+
+- 📝 每天翻阅大量群聊记录，手工整理候选人信息
+- 🔍 面试反馈、薪资讨论分散在不同时间和不同群
+- ⚠️ 关键信息容易被刷屏淹没，造成遗漏
+- 📊 每周招聘报表需手工汇总，耗时 30-60 分钟
+
+**日常工作载体**：企业微信 → 企业微信群 → 腾讯在线文档
+
+## AI 解决方案
+
+```
+微信群聊消息 → AI Agent 自动解析 → 结构化招聘数据 → 可视化看板
+     ↓                                    ↓                  ↓
+  口语化对话                         候选人/面试/薪资     管道漏斗/日程
+  信息碎片化                         自动分类提取         实时同步更新
+  关键词不完整                       语义理解补全         效率提升10x+
+```
+
+## 核心功能
+
+### 🆕 新增模块（v2.0）
+
+| 模块 | 功能 | 技术点 |
+|------|------|--------|
+| `wechat_data.py` | 模拟微信群聊数据 + 候选人简历 | Mock数据设计、对话系统 |
+| `chat_parser.py` | AI 群聊消息解析引擎 | Prompt Engineering、LLM语义理解 |
+| `dashboard.py` | 招聘数据可视化看板 | 管道漏斗、KPI卡片、效率对比 |
+
+### 🔄 保留模块（v1.0）
+
+| 模块 | 功能 |
+|------|------|
+| `resume_parser.py` | 简历解析（PDF/DOCX/OCR + AI） |
+| `ai_match.py` | AI 简历-职位匹配引擎 |
+| `config.py` | 配置管理（API Key 加密存储） |
+| `excel_export.py` | Excel 报表导出 |
+| `email_templates.py` | 邮件模板（面试邀请/Offer/感谢信） |
 
 ## 快速开始
 
 ### 1. 安装依赖
 
-双击运行 `install.bat`，或手动执行：
-
 ```bash
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
-### 2. 启动系统
+### 2. 启动 Demo
 
-双击运行 `start.bat`，浏览器自动打开 `http://localhost:8501`
+```bash
+streamlit run app.py
+```
 
-### 3. 配置 AI（首次使用）
+浏览器自动打开 `http://localhost:8501`
 
-首次启动会弹出配置向导，填入 AI API Key 即可：
-- 支持 DeepSeek、OpenAI、SiliconFlow 等兼容 API
-- API Base URL 和模型名称均可自定义
+### 3. 使用方式
 
-## 配置说明
+#### Demo 模式（无需 API Key）
+- 直接启动后可在「方案概述」「微信消息模拟」「招聘数据看板」「候选人简历库」Tab 中查看完整演示
+- 使用预设的模拟群聊数据展示 AI 解析效果
 
-配置文件：`settings.json`（自动创建）
+#### AI 实时解析模式
+- 在左侧边栏配置 API Key（支持 OpenAI / DeepSeek / SiliconFlow 等）
+- 进入「AI解析引擎」Tab，开启「启用AI实时解析」开关
+- 点击「AI解析」按钮，调用 LLM 实时解析群聊记录
 
-| 字段 | 说明 | 示例 |
-|------|------|------|
-| `api_key` | AI API Key | `sk-...` |
-| `api_base` | API 接口地址 | `https://api.deepseek.com/v1` |
-| `model` | 模型名称 | `deepseek-chat` |
-| `company_name` | 公司名称（可选）| `某科技有限公司` |
+#### AI 智能匹配（原功能）
+- 在「AI智能匹配」Tab 中上传简历 PDF/DOCX
+- 输入职位描述，点击开始匹配
+- 获得多维度评分和推荐建议
 
-也可在系统界面点击侧边栏「⚙️ 系统设置」随时修改。
+## 演示数据
+
+Demo 内置 6 个真实招聘场景的模拟群聊：
+
+| 场景 | 候选人 | 职位 | 阶段 | 特点 |
+|------|--------|------|------|------|
+| 1 | 张明 | Python后端 | 简历→安排面试 | 正向评估、完整流程 |
+| 2 | 张明(续) | Python后端 | 一面通过→二面 | 面试反馈、薪资讨论 |
+| 3 | 李芳 | 前端开发 | 简历评估→面试 | 经验偏少但匹配 |
+| 4 | 王强 | 高级产品经理 | 简历→初面 | 跨部门协作评估 |
+| 5 | 赵丽 | 数据分析师 | 简历→面试 | **含无关闲聊** |
+| 6 | 陈伟 | DevOps工程师 | 简历→待约 | 稳定性讨论 |
+
+数据特点：
+- ✅ 口语化表达（"还行吧""问题不大""先面一下看看"）
+- ✅ 信息碎片化（候选人信息分散在多条消息）
+- ✅ 关键词不完整（"py后端"代替"Python后端工程师"）
+- ✅ 包含无关闲聊（点外卖等，测试AI过滤）
+- ✅ 工作群沟通习惯真实还原
+
+## 技术架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    前端展示层 (Streamlit)                  │
+│  方案概述 │ 微信消息 │ AI解析 │ 招聘看板 │ 简历库 │ AI匹配  │
+├─────────────────────────────────────────────────────────┤
+│                     AI 解析层                             │
+│  chat_parser.py: LLM语义理解 → 结构化数据提取             │
+│  resume_parser.py: 简历解析 (PDF/DOCX/OCR)               │
+│  ai_match.py: 多维AI匹配分析                              │
+├─────────────────────────────────────────────────────────┤
+│                     数据层                                │
+│  wechat_data.py: 模拟群聊数据 + 候选人简历                 │
+│  dashboard.py: 数据聚合 + 可视化                          │
+├─────────────────────────────────────────────────────────┤
+│                     基础设施                              │
+│  config.py: 配置管理(加密) │ excel_export.py: Excel导出    │
+│  email_templates.py: 邮件模板                             │
+└─────────────────────────────────────────────────────────┘
+```
+
+## 真实部署扩展
+
+Demo 使用模拟数据演示核心 AI 能力。真实部署时需：
+
+1. **消息采集**：接入企业微信/微信消息接口，定时抓取群聊记录
+2. **数据持久化**：接入 SQLite/MySQL，存储结构化招聘数据
+3. **权限管理**：按部门/角色控制数据访问
+4. **通知推送**：面试提醒、关键决策通知
+5. **在线文档同步**：自动更新腾讯文档中的招聘表格
 
 ## 环境要求
 
@@ -53,29 +135,16 @@ python -m pip install -r requirements.txt
 ## 目录结构
 
 ```
-recruitment_agent/
-├── app.py              # 主程序（Streamlit）
-├── db.py               # 数据库操作
-├── config.py           # 配置文件
-├── ai_match.py         # AI 匹配引擎
-├── match_engine.py     # 规则匹配引擎
-├── resume_parser.py    # 简历解析
-├── excel_export.py     # Excel 导出
-├── requirements.txt    # 依赖清单
-├── install.bat        # 依赖安装脚本（Windows）
-├── start.bat          # 启动脚本（Windows）
-├── settings.json       # 用户配置（自动生成）
-├── recruitment.db     # SQLite 数据库（自动生成）
-└── resumes/           # 简历文件存储目录
+recruitment-agent-demo/
+├── app.py                 # 主程序（Streamlit多Tab界面）
+├── wechat_data.py         # [新增] 微信模拟数据生成
+├── chat_parser.py         # [新增] AI群聊解析引擎
+├── dashboard.py           # [新增] 招聘数据可视化看板
+├── resume_parser.py       # [保留] 简历解析
+├── ai_match.py            # [保留] AI简历匹配
+├── config.py              # [保留] 配置管理
+├── excel_export.py        # [保留] Excel导出
+├── email_templates.py     # [保留] 邮件模板
+├── requirements.txt       # 依赖清单
+└── README.md              # 本文件
 ```
-
-## 常见问题
-
-**Q: 启动后提示「未找到 Python」**
-A: 请先安装 Python 3.9+，安装时勾选「Add Python to PATH」
-
-**Q: AI 匹配不工作**
-A: 检查 `settings.json` 中的 `api_key` 是否正确，或在「系统设置」页面测试连接。
-
-**Q: 如何迁移数据？**
-A: 直接复制整个文件夹即可，`recruitment.db` 包含所有数据。

@@ -23,6 +23,7 @@ build/
 .streamlit/secrets.toml
 .env
 settings.json
+.keyfile
 
 # IDE
 .vscode/

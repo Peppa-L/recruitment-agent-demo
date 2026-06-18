@@ -41,52 +41,44 @@ for _key in ["OPENAI_API_KEY", "OPENAI_API_BASE"]:
         except Exception:
             pass
 
+# ========== 后端 API 配置（从 Secrets / 环境变量读取，前端不暴露） ==========
+API_KEY = os.environ.get("OPENAI_API_KEY", "")
+API_BASE = os.environ.get("OPENAI_API_BASE", "https://api.deepseek.com/v1")
+AI_MODEL = os.environ.get("AI_PARSE_MODEL", "deepseek-chat")
+
 # ========== 侧边栏 ==========
 st.sidebar.title("🤖 招聘提效 AI Agent")
 st.sidebar.caption("群聊消息 → AI 批量解析 → 自动化录入")
 
-# 导航（常驻）
-page = st.sidebar.radio(
-    "功能导航",
-    options=["💬 AI 智能解析", "📊 招聘数据看板", "📄 简历智能匹配"],
-    label_visibility="collapsed",
-)
+st.sidebar.markdown("---")
+
+# ---- 大按钮导航 ----
+if "nav_page" not in st.session_state:
+    st.session_state.nav_page = "💬 AI 智能解析"
+
+TAB_OPTIONS = ["💬 AI 智能解析", "📊 招聘数据看板", "📄 简历智能匹配"]
+
+for tab_name in TAB_OPTIONS:
+    is_active = (st.session_state.nav_page == tab_name)
+    label = f"{'🔷' if is_active else '🔹'} **{tab_name.split(' ', 1)[1]}**"
+    if st.sidebar.button(
+        label,
+        key=f"nav_{tab_name}",
+        use_container_width=True,
+        type="primary" if is_active else "secondary",
+    ):
+        st.session_state.nav_page = tab_name
+        st.rerun()
+
+page = st.session_state.nav_page
 
 st.sidebar.markdown("---")
 
-# API 配置（折叠到设置里，不占主页空间）
-with st.sidebar.expander("⚙️ API 设置", expanded=not bool(os.environ.get("OPENAI_API_KEY"))):
-    api_key = st.text_input(
-        "API Key",
-        type="password",
-        value=os.environ.get("OPENAI_API_KEY", ""),
-        placeholder="sk-...",
-        help="已预填默认 Key，也可手动修改",
-        key="sidebar_api_key",
-    )
-    api_base = st.text_input(
-        "API Base URL",
-        value=os.environ.get("OPENAI_API_BASE", "https://api.deepseek.com/v1"),
-        placeholder="https://api.deepseek.com/v1",
-        key="sidebar_api_base",
-    )
-    model = st.selectbox(
-        "模型",
-        options=["deepseek-chat", "gpt-4o-mini", "gpt-4o", "deepseek-reasoner"],
-        index=0,
-        key="sidebar_model",
-    )
-    show_debug = st.checkbox("🔬 调试模式", value=False,
-        help="显示每次 API 调用的原始返回，验证 AI 是否被真正调用")
-
-if api_key:
-    os.environ["OPENAI_API_KEY"] = api_key
-    os.environ["OPENAI_API_BASE"] = api_base
-    st.sidebar.success("✅ AI 已就绪")
-elif os.environ.get("OPENAI_API_KEY"):
+# AI 状态指示
+if API_KEY:
     st.sidebar.success("✅ AI 已就绪")
 else:
-    st.sidebar.info("💡 展开 ⚙️ API 设置 配置 Key")
+    st.sidebar.warning("⚠️ 未配置 API Key\n\n请在 `.streamlit/secrets.toml` 中设置 `OPENAI_API_KEY`")
 
 # 解析历史摘要
 parsed_count = len(st.session_state.parsed_results)
@@ -252,20 +244,22 @@ if page == "💬 AI 智能解析":
     # ---- 步骤3：批量解析 ----
     st.markdown("### ③ 执行 AI 解析")
 
-    parse_col1, parse_col2, parse_col3 = st.columns([1.5, 2, 4])
+    parse_col1, parse_col2, parse_col3, parse_col4 = st.columns([1.5, 1.5, 1, 3])
     with parse_col1:
         do_parse = st.button(
             "🤖 AI 解析",
             type="primary",
             use_container_width=True,
-            disabled=not (chat_input.strip() and api_key),
+            disabled=not (chat_input.strip() and API_KEY),
         )
     with parse_col2:
-        if not api_key:
-            st.warning("⚠️ 请先配置 API Key")
+        if not API_KEY:
+            st.warning("⚠️ 请先配置 API Key（在 .streamlit/secrets.toml 中设置 OPENAI_API_KEY）")
         elif not chat_input.strip():
             st.info("👆 勾选对话或粘贴记录")
     with parse_col3:
+        show_debug = st.checkbox("🔬 调试", value=False, help="显示 API 原始返回")
+    with parse_col4:
         if st.session_state.selected_scenario_ids:
             sid_list = list(st.session_state.selected_scenario_ids)
             st.caption(f"将对 {len(sid_list)} 段对话逐条调用 AI 解析（约 {len(sid_list) * 15} 秒）")
@@ -314,9 +308,6 @@ if page == "💬 AI 智能解析":
             try:
                 parsed = parse_chat_messages(
                     chunk[:12000],
-                    api_key=api_key,
-                    api_base=api_base,
-                    model=model,
                 )
 
                 # 提取 API 元数据（调用证据）
@@ -357,7 +348,7 @@ if page == "💬 AI 智能解析":
             )
             if not last_meta:
                 st.warning("⚠️ 未检测到 API 调用记录，可能使用了本地回退逻辑")
-            st.info("👆 展开下方结果可查看 API 调用证据，或开启侧边栏「🔬 调试模式」查看原始返回")
+            st.info("👆 展开下方结果可查看 API 调用证据，开启「🔬 调试」复选框可查看原始返回")
             st.rerun()
         elif skip_count > 0:
             st.warning(f"⏭️ 全部 {skip_count} 条已存在（已去重），无需重复解析。")
@@ -554,8 +545,8 @@ elif page == "📄 简历智能匹配":
     st.title("📄 简历智能匹配")
     st.caption("上传候选人简历 + 输入职位描述 → AI 多维度匹配分析")
 
-    if not api_key:
-        st.warning("⚠️ 此功能需要配置 API Key，请在左侧边栏输入")
+    if not API_KEY:
+        st.warning("⚠️ 此功能需要配置 API Key（在 .streamlit/secrets.toml 中设置 OPENAI_API_KEY）")
         st.stop()
 
     col1, col2 = st.columns(2)
@@ -619,7 +610,7 @@ elif page == "📄 简历智能匹配":
             try:
                 with st.spinner("🔍 正在解析简历..."):
                     from resume_parser import parse_resume_file
-                    result = parse_resume_file(temp_path, use_ai=True, api_key=api_key, api_base=api_base, model=model)
+                    result = parse_resume_file(temp_path, use_ai=True)
                     parsed_data = result.get("merged", result.get("basic", {}))
                     st.success(f"✅ 简历解析完成（{result.get('parser_method', 'regex')}模式）")
             finally:
@@ -650,7 +641,6 @@ elif page == "📄 简历智能匹配":
             }
             match_result = ai_match_resume(
                 job=job_dict, resume_parsed=parsed_data,
-                api_key=api_key, api_base=api_base, model=model,
             )
             st.success("✅ 匹配分析完成！")
 

@@ -184,25 +184,22 @@ if page == "💬 AI 智能解析":
         if st.session_state.selected_scenario_ids:
             st.info(f"已勾选 {len(st.session_state.selected_scenario_ids)} 段对话")
 
-    # 多选列表 — checkbox 绑定独立的 session_state key，全选/清空时同步
+    # 多选列表 — 每个 checkbox 独立运作，通过 selected_scenario_ids 追踪选中状态
     for i, sc in enumerate(scenarios):
         sid = sc["description"][:40]  # 唯一 ID
         cb_key = f"_cb_{i}"
 
-        # 同步：确保 checkbox 的 session_state 值与 selected_scenario_ids 一致
         is_checked = sid in st.session_state.selected_scenario_ids
-        st.session_state[cb_key] = is_checked
 
         col_check, col_info, col_preview = st.columns([0.5, 2, 5])
         with col_check:
-            # 只用 key，不用 value；状态由上面 st.session_state[cb_key] 驱动
-            checked = st.checkbox("", key=cb_key, label_visibility="collapsed")
-            # 切换后更新 selected_scenario_ids
-            if checked and not is_checked:
-                st.session_state.selected_scenario_ids.add(sid)
-                st.rerun()
-            elif not checked and is_checked:
-                st.session_state.selected_scenario_ids.discard(sid)
+            # value= 只在首次渲染时生效；后续 Streamlit 以用户交互为准
+            checked = st.checkbox("", value=is_checked, key=cb_key, label_visibility="collapsed")
+            if checked != is_checked:
+                if checked:
+                    st.session_state.selected_scenario_ids.add(sid)
+                else:
+                    st.session_state.selected_scenario_ids.discard(sid)
                 st.rerun()
 
         with col_info:

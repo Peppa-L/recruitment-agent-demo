@@ -31,6 +31,16 @@ if "chat_input_text" not in st.session_state:
 if "selected_scenario_ids" not in st.session_state:
     st.session_state.selected_scenario_ids = set()
 
+# ========== 注入 Secrets 到环境变量（自动填充 API Key） ==========
+for _key in ["OPENAI_API_KEY", "OPENAI_API_BASE"]:
+    if not os.environ.get(_key):
+        try:
+            _val = st.secrets.get(_key, "")
+            if _val:
+                os.environ[_key] = _val
+        except Exception:
+            pass
+
 # ========== 侧边栏 ==========
 st.sidebar.title("🤖 招聘提效 AI Agent")
 st.sidebar.caption("群聊消息 → AI 批量解析 → 自动化录入")
@@ -45,18 +55,18 @@ page = st.sidebar.radio(
 st.sidebar.markdown("---")
 
 # API 配置（折叠到设置里，不占主页空间）
-with st.sidebar.expander("⚙️ API 设置", expanded=not bool(os.environ.get("OPENAI_API_KEY", ""))):
+with st.sidebar.expander("⚙️ API 设置", expanded=not bool(os.environ.get("OPENAI_API_KEY"))):
     api_key = st.text_input(
         "API Key",
         type="password",
-        value=os.environ.get("OPENAI_API_KEY", st.secrets.get("OPENAI_API_KEY", "")),
+        value=os.environ.get("OPENAI_API_KEY", ""),
         placeholder="sk-...",
         help="已预填默认 Key，也可手动修改",
         key="sidebar_api_key",
     )
     api_base = st.text_input(
         "API Base URL",
-        value=os.environ.get("OPENAI_API_BASE", st.secrets.get("OPENAI_API_BASE", "https://api.deepseek.com/v1")),
+        value=os.environ.get("OPENAI_API_BASE", "https://api.deepseek.com/v1"),
         placeholder="https://api.deepseek.com/v1",
         key="sidebar_api_base",
     )
@@ -72,6 +82,8 @@ with st.sidebar.expander("⚙️ API 设置", expanded=not bool(os.environ.get("
 if api_key:
     os.environ["OPENAI_API_KEY"] = api_key
     os.environ["OPENAI_API_BASE"] = api_base
+    st.sidebar.success("✅ AI 已就绪")
+elif os.environ.get("OPENAI_API_KEY"):
     st.sidebar.success("✅ AI 已就绪")
 else:
     st.sidebar.info("💡 展开 ⚙️ API 设置 配置 Key")
